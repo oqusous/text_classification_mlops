@@ -203,7 +203,7 @@ if can_train==True:
             pickle.dump( {'feat': name_of_feat_test} , open('data/data_split/feat_target_test.pkl','wb'))
         with st.empty():
             st.warning(f"⏳ Model training in progress. WARNING: Do not refresh or hit the back button on the browser")
-            run_and_display_stdout("sh", "./run_all.sh")
+            run_and_display_stdout("sh", "./sh_scripts/run_all.sh")
             st.success("✔️ All models trained successfully!")
 files_and_dirs_model = [f for f in listdir('model/')]
 files_and_dirs_roberta = []
@@ -334,10 +334,8 @@ st.write('\n')
 st.write('\n')
 st.write('\n')
 
+confirmation = None
 st.write("To rest the app and upload new data click on the Reset button below. This will delete trained models and data uploaded.")
+
 if st.button("Reset", key=None, help=None, on_click=None, args=None, kwargs=None):
-    confirm_delete= st.selectbox(label='Select confirm to delete',options=('','Confirm', 'Changed my mind'))
-    if confirm_delete == 'Confirm':
-        subprocess.call(['sh', './delete_data_models.sh'])
-    else:
-        print(confirm_delete, file=sys.stdout)
+    subprocess.call(['sh', './sh_scripts/delete_data_models.sh'])

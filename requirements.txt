@@ -1,0 +1,14 @@
+streamlit
+nltk
+pandas
+tensorflow
+torch
+keras
+boto3
+botocore
+spacy
+transformers
+datasets
+tensorflow_addons
+sentence-piece
+plotly

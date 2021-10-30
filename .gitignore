@@ -128,17 +128,22 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# my gitignores
+### my gitignores
+# extensions
+*.csv
+*.json
+*.jsonl
+*.pkl
+# folders
 .old/
 /.vector_cache/
-*.csv
 glove/glove.6B.300d.txt
 model/roberta_model/
-model/roberta_cls/
+model/roberta_text_cls/
 model/roberta_tok/
+model/roberta_model/
 model/crnn_model.h5
 model/rnn_model.h5
-*.pkl
 plots/
 runs/
 terminal_logs/
