@@ -134,6 +134,8 @@ dmypy.json
 *.json
 *.jsonl
 *.pkl
+*.h5
+*.zip
 # folders
 .old/
 /.vector_cache/
@@ -142,8 +144,6 @@ model/roberta_model/
 model/roberta_text_cls/
 model/roberta_tok/
 model/roberta_model/
-model/crnn_model.h5
-model/rnn_model.h5
 plots/
 runs/
 terminal_logs/

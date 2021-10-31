@@ -81,7 +81,7 @@ if __name__ == '__main__':
     elif 'val.csv' in onlyfiles and 'test.csv' in onlyfiles and 'train.csv' in onlyfiles:
         df_train = pd.read_csv("data/train.csv")
         feat_target_train = pickle.load(open('data/data_split/feat_target_train.pkl', 'rb'))
-        all.rename(columns={feat_target_train['label']:'label', feat_target_train['feat']:'text'}, inplace=True)
+        df_train.rename(columns={feat_target_train['label']:'label', feat_target_train['feat']:'text'}, inplace=True)
         df_val = pd.read_csv("data/val.csv")
         feat_target_val = pickle.load(open('data/data_split/feat_target_val.pkl', 'rb'))
         df_val.rename(columns={feat_target_val['label']:'label', feat_target_val['feat']:'text'}, inplace=True)

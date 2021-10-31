@@ -108,7 +108,7 @@ def plotly_wordfreq(df, train_feat_col, train_label_col, lables_selected, num_co
                 df_label = df[df[train_label_col]==labels[label_idx]]
                 tokens_list=[]
                 for sent in df_label[train_feat_col].tolist():
-                    tokens_list.extend(re.sub(r'[^\w\s]','',sent).split(' '))
+                    tokens_list.extend(re.sub(r'[^\w\s]','',str(sent)).split(' '))
                 filter_tokens = [token.lower().strip() for token in tokens_list \
                                     if token.lower().strip() not in list(stop_ws) and token!=' ' and token !='' ]
                 

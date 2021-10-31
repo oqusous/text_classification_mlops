@@ -93,9 +93,9 @@ if (train_csv is not None) and (test_csv is not None) and (val_csv is not None):
         name_of_labels_detected_test = df_test[name_of_target_test].value_counts().to_frame(name="test set count")
         st.write("Number of classes detected in training, validation and test sets are {}, {} and {} respectively. The names and counts of classes for each set are:".format(len(name_of_labels_detected_train), len(name_of_labels_detected_val), len(name_of_labels_detected_test)))
         st.table(pd.concat([name_of_labels_detected_train, name_of_labels_detected_val, name_of_labels_detected_test], axis=1))
-        if np.array_equal(name_of_labels_detected_train , name_of_labels_detected_test) and np.array_equal(name_of_labels_detected_val , name_of_labels_detected_train):
+        if np.array_equal(name_of_labels_detected_train.index.tolist().sort() , name_of_labels_detected_test.index.tolist().sort()) and np.array_equal(name_of_labels_detected_val.index.tolist().sort() , name_of_labels_detected_train.index.tolist().sort()):
             can_train = True
-        elif (name_of_labels_detected_train != name_of_labels_detected_test) or (name_of_labels_detected_train != name_of_labels_detected_val):
+        elif np.array_equal(name_of_labels_detected_train.index.tolist().sort() != name_of_labels_detected_test.index.tolist().sort()) or np.array_equal(name_of_labels_detected_train.index.tolist().sort() != name_of_labels_detected_val.index.tolist().sort()):
             st.warning("WARNING: Number of classes in target columns have to match in order to be able to proceed to training.")
     elif option_test_label == 'No' and name_of_target_train and name_of_feat_train and name_of_feat_test and name_of_feat_val and name_of_target_val:
         name_of_labels_detected_train = df_train_[name_of_target_train].value_counts().to_frame(name="train set count")
@@ -103,7 +103,7 @@ if (train_csv is not None) and (test_csv is not None) and (val_csv is not None):
         name_of_labels_detected_val = df_val[name_of_target_val].value_counts().to_frame(name="val set count")
         st.write("Number of classes detected in training and validation sets are {} and {} respectively. The names and counts of classes for each set are:".format(len(name_of_labels_detected_train), len(name_of_labels_detected_val)))
         st.table(pd.concat([name_of_labels_detected_train, name_of_labels_detected_val], axis=1))
-        if np.array_equal(name_of_labels_detected_train , name_of_labels_detected_val):
+        if np.array_equal(name_of_labels_detected_train.index.tolist().sort() , name_of_labels_detected_val.index.tolist().sort()):
             can_train = True
         elif (name_of_labels_detected_train != name_of_labels_detected_val):
             st.warning("WARNING: Number of classes in target columns have to match in order to be able to proceed to training.")
@@ -124,9 +124,9 @@ elif (train_csv is not None) and (test_csv is not None):
         name_of_labels_detected_test = df_test[name_of_target_test].value_counts().to_frame(name="test set count")
         st.write("Number of classes detected in training and test sets are {} and {} respectively. The names and counts of classes for each set are:".format(len(name_of_labels_detected_train), len(name_of_labels_detected_test)))
         st.table(pd.concat([name_of_labels_detected_train, name_of_labels_detected_test], axis=1))
-        if option_test_label == 'Yes' and np.array_equal(name_of_labels_detected_train , name_of_labels_detected_test):
+        if option_test_label == 'Yes' and np.array_equal(name_of_labels_detected_train.index.tolist().sort() , name_of_labels_detected_test.index.tolist().sort()):
             can_train = True
-        elif option_test_label == 'Yes' and not np.array_equal(name_of_labels_detected_train , name_of_labels_detected_test):
+        elif option_test_label == 'Yes' and not np.array_equal(name_of_labels_detected_train.index.tolist().sort() , name_of_labels_detected_test.index.tolist().sort()):
             st.warning("WARNING: Number of classes in target columns have to match in order to be able to proceed to training.")
     elif option_test_label == 'No' and name_of_target_train and name_of_feat_train and name_of_feat_test:
         name_of_labels_detected_train = df_train_[name_of_target_train].value_counts().to_frame(name="count")
@@ -149,9 +149,9 @@ elif (train_csv is not None) and (val_csv is not None):
         name_of_labels_detected_val = df_val[name_of_target_val].value_counts().to_frame(name="val set count")
         st.write("Number of classes detected in training and validation set are {} and {} respectively. The names and counts of classes for each set are:".format(len(name_of_labels_detected_train), len(name_of_labels_detected_val)))
         st.table(pd.concat([name_of_labels_detected_train, name_of_labels_detected_val], axis=1))
-        if np.array_equal(name_of_labels_detected_train , name_of_labels_detected_val):
+        if np.array_equal(name_of_labels_detected_train.index.tolist().sort() , name_of_labels_detected_val.index.tolist().sort()):
             can_train = True
-        elif not np.array_equal(name_of_labels_detected_train , name_of_labels_detected_val):
+        elif not np.array_equal(name_of_labels_detected_train.index.tolist().sort() , name_of_labels_detected_val.index.tolist().sort()):
             st.warning("WARNING: Number of classes in target columns have to match in order to be able to proceed to training.")
 
 elif (train_csv is not None):
