@@ -138,7 +138,7 @@ dmypy.json
 *.zip
 # folders
 .old/
-/.vector_cache/
+.vector_cache/
 glove/glove.6B.300d.txt
 model/roberta_model/
 model/roberta_text_cls/

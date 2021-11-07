@@ -17,6 +17,7 @@ from os import listdir
 import os
 from os.path import isfile, exists
 import base64
+
 st.set_page_config(layout="wide")
 device = torch.device('cpu')
 st.markdown('<h1 style="text-align:center;color:white;font-weight:bolder;font-size:100px;">MLOps Text Classifier</h1>',unsafe_allow_html=True)
@@ -177,10 +178,8 @@ if can_train==True:
     with row1_2:
         num_cols=st.slider('Number of columns to show plot in',min_value=1,max_value=3,value=2,step=1)
     labels_to_show=st.multiselect("Select labels to plot the histograms",options=df_train_[name_of_target_train].unique(), default=df_train_[name_of_target_train].unique())
-    
     fig_wf = plotly_wordfreq(df=df_train_, train_feat_col=name_of_feat_train, train_label_col=name_of_target_train, lables_selected=labels_to_show, num_cols = num_cols, num_most_common=num_most_common)
-    st.plotly_chart(fig_wf, use_container_width=True)
-
+    st.plotly_chart(fig_wf, use_container_width=True)    
     st.header("Training parameters")
     st.write("\n")
     row2_1, row2_s1, row2_2= st.columns([2,0.2,1])
@@ -205,6 +204,22 @@ if can_train==True:
             st.warning(f"⏳ Model training in progress. WARNING: Do not refresh or hit the back button on the browser")
             run_and_display_stdout("sh", "./sh_scripts/run_all.sh")
             st.success("✔️ All models trained successfully!")
+elif can_train==False and exists('data/data_split/train.csv') and exists('data/data_split/feat_target_train.pkl'):
+    st.header("\n")
+    st.header("Data Visualization")
+    st.subheader("Histogram of most frequent words for each label")
+    name_of_target_train_false_plot='label'
+    name_of_feat_train_false_plot='text'
+    df_train_false_plot=pd.read_csv('data/data_split/train.csv')
+    row1_1, row1_s1, row1_2= st.columns([2,0.2,1])
+    with row1_1:
+        num_most_common=st.slider('Max number of most common words to show for each label',min_value=5,max_value=25,value=5,step=1)
+    with row1_2:
+        num_cols=st.slider('Number of columns to show plot in',min_value=1,max_value=3,value=2,step=1)
+    labels_to_show=st.multiselect("Select labels to plot the histograms",options=df_train_false_plot[name_of_target_train_false_plot].unique(), default=df_train_false_plot[name_of_target_train_false_plot].unique())
+    fig_wf = plotly_wordfreq(df=df_train_false_plot, train_feat_col=name_of_feat_train_false_plot, train_label_col=name_of_target_train_false_plot, lables_selected=labels_to_show, num_cols = num_cols, num_most_common=num_most_common)
+    st.plotly_chart(fig_wf, use_container_width=True) 
+
 files_and_dirs_model = [f for f in listdir('model/')]
 files_and_dirs_roberta = []
 if exists('model/roberta_model/'):
@@ -315,11 +330,22 @@ if ("roberta_preds.pkl" in files_and_dirs_preds) and ("predict_rnn.pkl" in files
                                          "RNN+CNN":[accuracy_crnn, f1_crnn, recall_crnn, precision_crnn], \
                                          "RoBERTa":[accuracy_rob, f1_rob, recall_rob, precision_rob]}, \
                                          index=['Accuracy', 'F1', 'Recall','Precision']))
-    choice_preds_dict={"RNN":rnn_preds_class, "RNN+CNN":crnn_preds_class, "RoBERTa":roberta_preds_class}
-    choice_preds_key = st.selectbox("Choose testset predictions to download.", options=list(choice_preds_dict.keys()))
-    df_download = pd.concat([labels_test, pd.DataFrame(choice_preds_dict[choice_preds_key], columns=['pred_labels'],index=labels_test.index)], axis=1)
+        choice_preds_dict={"RNN":[rnn_preds_class, rnn_preds], "RNN+CNN":[crnn_preds_class, crnn_preds], "RoBERTa":[roberta_preds_class,roberta_preds[0]]}
+        choice_preds_key = st.selectbox("Choose model testset predictions to plot ROC and Confusion Matrix as well as download results.", options=list(choice_preds_dict.keys()))
+        row5_1, row5_2 = st.columns([1,1])
+        with row5_1:
+            st.write("ROC Curve:")
+            fig_roc = roc_plot(labels_test_, choice_preds_dict[choice_preds_key][1], num_label, sorted(labels_test['label'].unique().tolist()), choice_preds_key)
+            st.plotly_chart(fig_roc, use_container_width=True)
+        with row5_2:
+            st.write("Confusion Matrix:")
+            fig_cf = cf_plot(labels_test_, choice_preds_dict[choice_preds_key][0], labels_test['label'].unique().tolist())
+            st.plotly_chart(fig_cf, use_container_width=True)
+    
+    df_download = pd.concat([labels_test, pd.DataFrame(choice_preds_dict[choice_preds_key][0], columns=['pred_labels'],index=labels_test.index)], axis=1)
     csv_download = df_download.to_csv(index=False)
-    if st.button("Download CSV"):
+    st.write("Download predictions of chosen model in csv format by clicking on the button below.")
+    if st.button(label="Download CSV",help=""):
         b64 = base64.b64encode(csv_download.encode()).decode()
         href = f'<a href="data:file/csv;base64,{b64}">Download CSV File</a> (right-click and save as &lt;some_name&gt;.csv)'
         st.markdown(href, unsafe_allow_html=True)

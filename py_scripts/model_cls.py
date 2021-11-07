@@ -28,13 +28,13 @@ def metric_for_tf(metric_name, num_label):
     if metric_name=='accuracy':
         return "accuracy"
     else:
-        if num_label == 2:
+        if num_label == 1:
             return tfa.metrics.F1Score(num_classes=num_label, average= None)
         else:
             return tfa.metrics.F1Score(num_classes=num_label, average= 'macro')
 
 def y_for_categorical_crossentropy(y_le, num_label):
-    if num_label != 2:
+    if num_label != 1:
         enc = OneHotEncoder()
         enc.fit(np.arange(0,num_label).reshape(-1,1))
         y_enc = enc.transform(y_le.reshape(-1,1))

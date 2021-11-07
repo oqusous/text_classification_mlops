@@ -2,12 +2,14 @@ from numpy.lib.function_base import average
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.figure_factory as ff
 # NN
 import tensorflow as tf
 from tensorflow.python.framework.ops import container
-from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
-from transformers import AutoTokenizer, RobertaTokenizer
-from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
+from transformers import AutoModelForSequenceClassification
+from transformers import RobertaTokenizer
+from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score, roc_auc_score, confusion_matrix, roc_curve, roc_auc_score
+from sklearn.preprocessing import OneHotEncoder
 import keras
 import spacy
 nlp = spacy.load('en_core_web_sm')
@@ -19,10 +21,6 @@ import subprocess
 import json
 import numpy as np
 import os
-import collections
-import functools
-import inspect
-import textwrap
 
 def return_scores(label, pred, num_label):
     if num_label == 2:
@@ -81,16 +79,71 @@ def hf_predict(text, max_len, le):
     st.write("Class/Category predicted: {}".format(le_inv_tran[0]))
 
 @st.cache
+def roc_plot(y_test, y_test_pred, num_labels, label_names, model):
+    fig = go.Figure()
+    fig.add_shape(
+        type='line', line=dict(dash='dash'),
+        x0=0, x1=1, y0=0, y1=1
+    )
+    if num_labels == 2:
+        if model != "RoBERTa":
+            y_score = np.exp(y_test_pred)/(1+np.exp(y_test_pred))
+            fpr, tpr, _ = roc_curve(y_test, y_score)
+            auc_score = roc_auc_score(y_test, y_score)
+            name = f"(AUC={auc_score:.2f})"
+            fig.add_trace(go.Scatter(x=fpr, y=tpr, name=name, mode='lines'))
+        else:
+            y_score = np.exp(y_test_pred[:,1])/(1+np.exp(y_test_pred[:,1]))
+            y_score = y_score.reshape(-1,1)
+            fpr, tpr, _ = roc_curve(y_test, y_score)
+            auc_score = roc_auc_score(y_test, y_score)
+            name = f"(AUC={auc_score:.2f})"
+            fig.add_trace(go.Scatter(x=fpr, y=tpr, name=name, mode='lines'))
+    else:
+        enc = OneHotEncoder()
+        enc.fit(np.arange(0,num_labels).reshape(-1,1))
+        y_enc = enc.transform(y_test.reshape(-1,1))
+        for i in range(num_labels):
+            y_true = y_enc.toarray()[:, i]
+            y_score = y_test_pred[:, i]
+            fpr, tpr, _ = roc_curve(y_true, y_score)
+            auc_score = roc_auc_score(y_true, y_score)
+            name = f"{label_names[i]} (AUC={auc_score:.2f})"
+            fig.add_trace(go.Scatter(x=fpr, y=tpr, name=name, mode='lines'))
+
+    fig.update_layout(xaxis_title='False Positive Rate',
+                      yaxis_title='True Positive Rate',
+                      yaxis=dict(scaleanchor="x", scaleratio=1),
+                      xaxis=dict(constrain='domain'),
+                      legend=dict(y=0.02, x =0.75 ,xanchor="right",yanchor="bottom",traceorder='normal',font=dict(size=10,), orientation="v"),
+                      showlegend=True,
+                      margin=dict(l=20, r=20, t=20, b=20))
+    return fig
+
+@st.cache
+def cf_plot(y_test, y_test_pred, ax_labels):
+    cnf_matrix = confusion_matrix(y_test, y_test_pred)
+    x=sorted(ax_labels)
+    y=sorted(ax_labels)
+    colorscale = [[0, 'rgb(255, 220, 130)'], [1, 'rgb(0, 168, 255)']]
+    font_colors = ['grey', 'black']
+    fig = ff.create_annotated_heatmap(cnf_matrix, x=x, y=y, colorscale=colorscale, font_colors=font_colors)
+    fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
+    return fig
+
+@st.cache
 def plotly_training_graphs(df1, title_, training_avilable, y_axis):
-    fig1 = go.Figure(layout = {'xaxis': {'title': 'Epoch','visible': True,'showticklabels': True},'yaxis': {'title': 'Loss/Metric','visible': True,'showticklabels': True}})
+    fig1 = go.Figure(layout = {'xaxis': {'title': 'Epoch','visible': True,'showticklabels': True},\
+                               'yaxis': {'title': 'Loss/Metric','visible': True,'showticklabels': True}})
     if training_avilable:
         fig1.add_trace(go.Scatter(name="loss", x=df1['Epoch'], y=df1['loss'], legendrank=4, mode='lines'))
         fig1.add_trace(go.Scatter(name=y_axis, x=df1['Epoch'], y=df1[y_axis], legendrank=2, mode='lines'))
     fig1.add_trace(go.Scatter(name="val_loss", x=df1['Epoch'], y=df1['val_loss'], legendrank=1, mode='lines'))
     fig1.add_trace(go.Scatter(name=y_axis, x=df1['Epoch'], y=df1[y_axis], legendrank=3, mode='lines'))
-    fig1.update_layout(title_text=title_, legend=dict(y=0.99, x =0.01 ,xanchor="left",yanchor="top",traceorder='normal',font=dict(size=8,), orientation="h")) # width=800, height=500, 
+    fig1.update_layout(title_text=title_, 
+                       legend=dict(y=0.99, x =0.01 ,xanchor="left",yanchor="top",traceorder='normal',font=dict(size=10,), orientation="h"),
+                       margin=dict(l=20, r=20, t=30, b=20)) # width=800, height=500, 
     return fig1
-    
 
 @st.cache
 def plotly_wordfreq(df, train_feat_col, train_label_col, lables_selected, num_cols = 2, num_most_common=5):
@@ -119,4 +172,4 @@ def plotly_wordfreq(df, train_feat_col, train_label_col, lables_selected, num_co
                 fig1.add_trace(go.Bar(x=[k[0] for k in most_common_words], y=[v[1] for v in most_common_words]), row=r,col=c)
                 label_idx+=1
     height=min(1000, 200+(200*num_rows))
-    return fig1.update_layout(showlegend=False, height=height)
+    return fig1.update_layout(showlegend=False, height=height, margin=dict(l=20, r=20, t=30, b=20))
