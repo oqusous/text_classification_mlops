@@ -20,7 +20,7 @@ import base64
 
 st.set_page_config(layout="wide")
 device = torch.device('cpu')
-st.markdown('<h1 style="text-align:center;color:white;font-weight:bolder;font-size:100px;">MLOps Text Classifier</h1>',unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center;color:white;font-weight:bolder;font-size:80px;">AutoMLOps Text Classifier and Sentiment Analyzer</h1>',unsafe_allow_html=True)
 # st.title("MLOps Text Classifier")
 st.title("\n")
 num_of_labels = None
@@ -236,16 +236,16 @@ if 'pytorch_model.bin' in files_and_dirs_roberta and 'model_crnn.h5' in files_an
     df1.rename(columns={'Unnamed: 0':'Epoch'}, inplace=True)
     df1['Epoch'] = df1['Epoch'].apply(lambda x: x+1)
     df1_cols = df1.columns.tolist()
-    y_axis1 = "accuracy" if "accuracy" in df1_cols else "f1_score"
+    y_axis11, y_axis12 = "accuracy" if "accuracy" in df1_cols else "f1_score", "val_accuracy" if "accuracy" in df1_cols else "val_f1_score"
     with row3_1:
-        fig1 = plotly_training_graphs(df1, "RNN training results", True, y_axis1)
+        fig1 = plotly_training_graphs(df1, "RNN training results", True, y_axis11,y_axis12)
         st.plotly_chart(fig1, use_container_width=True)
     # CRNN plot
     df2 = pd.read_csv('plots/crnn_plot.csv')
     df2.rename(columns={'Unnamed: 0':'Epoch'}, inplace=True)
     df2['Epoch'] = df2['Epoch'].apply(lambda x: x+1)
     with row3_2:
-        fig2 = plotly_training_graphs(df2, "CNN+RNN Hybrid training results", True, y_axis1)
+        fig2 = plotly_training_graphs(df2, "CNN+RNN Hybrid training results", True,  y_axis11,y_axis12)
         st.plotly_chart(fig2, use_container_width=True)
     # Roberta plot
     path_to_rob_eval = "plots/trainer_state.json"
@@ -257,7 +257,7 @@ if 'pytorch_model.bin' in files_and_dirs_roberta and 'model_crnn.h5' in files_an
     for epoch in rob_eval['log_history']:
         if epoch['epoch'].is_integer():
             epoch_x.append(int(epoch['epoch']))
-            if y_axis1 == 'accuracy':
+            if y_axis11 == 'accuracy':
                 eval_meteric.append(epoch['eval_accuracy'])
                 y_axis2 = "val_accuracy"
             else:
@@ -266,7 +266,7 @@ if 'pytorch_model.bin' in files_and_dirs_roberta and 'model_crnn.h5' in files_an
             eval_loss.append(epoch['eval_loss'])
     df3 = pd.DataFrame({"Epoch":epoch_x, "val_loss":eval_loss, y_axis2:eval_meteric})
     with row3_3:
-        fig3 = plotly_training_graphs(df3, "RoBERTa training Results", False, y_axis2)
+        fig3 = plotly_training_graphs(df3, "RoBERTa training Results", False, None, y_axis2)
         st.plotly_chart(fig3, use_container_width=True)
 
     st.header("Test models with custom sentences")

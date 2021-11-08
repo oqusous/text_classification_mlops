@@ -22,6 +22,11 @@ import json
 import numpy as np
 import os
 
+def f1_str_flt(df_col):
+    if df_col.dtype == 'O':
+        return df_col.apply(lambda x : x.replace('[','').replace(']','')).astype('float')
+    return df_col
+
 def return_scores(label, pred, num_label):
     if num_label == 2:
         accuracy = round(accuracy_score(label, pred), 2)
@@ -123,26 +128,28 @@ def roc_plot(y_test, y_test_pred, num_labels, label_names, model):
 @st.cache
 def cf_plot(y_test, y_test_pred, ax_labels):
     cnf_matrix = confusion_matrix(y_test, y_test_pred)
+    cnf_matrix = np.round_(cnf_matrix.astype('float') / cnf_matrix.sum(axis=1)[:, np.newaxis], 3)
     x=sorted(ax_labels)
     y=sorted(ax_labels)
     colorscale = [[0, 'rgb(255, 220, 130)'], [1, 'rgb(0, 168, 255)']]
-    font_colors = ['grey', 'black']
+    font_colors = ['blue', 'black']
     fig = ff.create_annotated_heatmap(cnf_matrix, x=x, y=y, colorscale=colorscale, font_colors=font_colors)
+    fig["layout"]["xaxis"].update(side="bottom")
     fig.update_layout(margin=dict(l=20, r=20, t=20, b=20))
     return fig
 
 @st.cache
-def plotly_training_graphs(df1, title_, training_avilable, y_axis):
+def plotly_training_graphs(df1, title_, training_avilable, y_axis1, y_axis2):
     fig1 = go.Figure(layout = {'xaxis': {'title': 'Epoch','visible': True,'showticklabels': True},\
                                'yaxis': {'title': 'Loss/Metric','visible': True,'showticklabels': True}})
     if training_avilable:
-        fig1.add_trace(go.Scatter(name="loss", x=df1['Epoch'], y=df1['loss'], legendrank=4, mode='lines'))
-        fig1.add_trace(go.Scatter(name=y_axis, x=df1['Epoch'], y=df1[y_axis], legendrank=2, mode='lines'))
-    fig1.add_trace(go.Scatter(name="val_loss", x=df1['Epoch'], y=df1['val_loss'], legendrank=1, mode='lines'))
-    fig1.add_trace(go.Scatter(name=y_axis, x=df1['Epoch'], y=df1[y_axis], legendrank=3, mode='lines'))
+        fig1.add_trace(go.Scatter(name="loss", x=df1['Epoch'], y= f1_str_flt(df1['loss']), legendrank=4, mode='lines'))
+        fig1.add_trace(go.Scatter(name=y_axis1, x=df1['Epoch'], y= f1_str_flt(df1[y_axis1]), legendrank=2, mode='lines'))
+    fig1.add_trace(go.Scatter(name="val_loss", x=df1['Epoch'], y= f1_str_flt(df1['val_loss']), legendrank=1, mode='lines'))
+    fig1.add_trace(go.Scatter(name=y_axis2, x=df1['Epoch'], y= f1_str_flt(df1[y_axis2]), legendrank=3, mode='lines'))
     fig1.update_layout(title_text=title_, 
-                       legend=dict(y=0.99, x =0.01 ,xanchor="left",yanchor="top",traceorder='normal',font=dict(size=10,), orientation="h"),
-                       margin=dict(l=20, r=20, t=30, b=20)) # width=800, height=500, 
+                       legend=dict(orientation="h",yanchor="top",y=-0.15,xanchor="center",x=0.5,),
+                       margin=dict(l=20, r=20, t=30, b=100)) # width=800, height=500, 
     return fig1
 
 @st.cache
